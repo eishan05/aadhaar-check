@@ -16,14 +16,11 @@
   const statusDetail = $('status-detail');
   const rulesEl = $('rules');
   const suggestionsEl = $('suggestions');
-  const suggestionsIntro = $('suggestions-intro');
   const suggestionsBody = $('suggestions-body');
   const stepsWrap = $('steps-wrap');
   const stepsBody = $('steps-body');
   const stepsResult = $('steps-result');
   const copyStatus = $('copy-status');
-
-  const DEFAULT_DETAIL = statusDetail.textContent;
 
   // --- Small DOM helper (text only; nothing is ever parsed as HTML) ----------
 
@@ -111,33 +108,17 @@
 
   // --- Rendering ---------------------------------------------------------------
 
-  const KIND_NAME = { aadhaar: 'Aadhaar number', vid: 'Virtual ID (VID)', unknown: 'Aadhaar number or VID' };
+  const KIND_NAME = { aadhaar: 'Aadhaar number', vid: 'VID', unknown: 'number' };
 
   function statusText(r) {
-    const name = KIND_NAME[r.kind];
-    const firstFail = r.rules.find((rule) => rule.status === 'fail');
     switch (r.state) {
-      case 'empty':
-        return ['Type or paste a number to check it.', DEFAULT_DETAIL];
-      case 'incomplete':
-        return ['Keep typing…', r.length + ' of 12 digits.'];
-      case 'too-long':
-        return ['Too many digits for an Aadhaar number',
-          'Aadhaar numbers have 12 digits. If you are entering a 16-digit Virtual ID, keep typing.'];
-      case 'valid':
-        return ['Correctly formed ' + name,
-          (r.kind === 'vid' ? 'It has 16 digits' : 'It has 12 digits, a valid first digit') +
-          ' and a correct check digit, so it contains no single-digit typo or swapped neighbouring digits. ' +
-          'This does not prove the number was issued. Only UIDAI can confirm that.'];
-      case 'invalid':
-      default: {
-        let why = firstFail ? firstFail.detail : '';
-        if (firstFail && firstFail.id === 'checksum') {
-          why = 'The check digit does not match, so at least one digit is wrong or out of place.';
-        }
-        if (r.masked) return ['Masked Aadhaar number', firstFail.detail];
-        return ['Not a valid ' + name, why];
-      }
+      case 'empty': return ['', ''];
+      case 'incomplete': return ['Keep typing', ''];
+      case 'too-long': return ['Too many digits', '12 for Aadhaar, 16 for a VID'];
+      case 'valid': return ['Valid ' + KIND_NAME[r.kind], 'Well-formed. Doesn’t prove it was issued.'];
+      default:
+        if (r.masked) return ['Masked number', 'Need all 12 digits'];
+        return ['Invalid ' + KIND_NAME[r.kind], ''];
     }
   }
 
@@ -227,33 +208,24 @@
     if (!total) return;
 
     if (s.deletions.length) {
-      suggestionsIntro.textContent =
-        'If you typed one digit twice or added an extra digit by mistake, the number you meant is one of these. Check it against the card. Don’t guess.';
       suggestionsBody.append(
-        h('h3', null, 'One extra digit removed'),
-        candidateList(s.deletions, (item) => 'drop the ' + item.removedDigit + ' at position ' + (item.removedIndex + 1)));
+        h('h3', null, 'Extra digit'),
+        candidateList(s.deletions, (item) => 'drop ' + item.removedDigit + ' at pos ' + (item.removedIndex + 1)));
       return;
     }
 
-    suggestionsIntro.textContent =
-      'The check digit catches every single mistyped digit and every swap of two neighbouring digits. ' +
-      'If you made one of those mistakes, the number you meant is in this list. Check it against the card. Don’t guess.';
-
     if (s.transpositions.length) {
       suggestionsBody.append(
-        h('h3', null, 'Two neighbouring digits swapped'),
-        candidateList(s.transpositions, (item) => 'positions ' + (item.positions[0] + 1) + ' and ' + (item.positions[1] + 1)));
-    } else {
-      suggestionsBody.append(h('p', 'muted', 'No swap of two neighbouring digits gives a valid number.'));
+        h('h3', null, 'Swapped digits'),
+        candidateList(s.transpositions, (item) => 'pos ' + (item.positions[0] + 1) + '↔' + (item.positions[1] + 1)));
     }
 
     if (s.substitutions.length) {
       const details = h('details', 'subs');
       if (!s.transpositions.length) details.open = true;
       details.append(
-        h('summary', null, 'One digit mistyped (' + s.substitutions.length + ' possibilities)'),
-        h('p', 'muted', 'Each position has exactly one replacement digit that makes the check pass. The highlighted digit is the one that would change.'),
-        candidateList(s.substitutions, (item) => 'position ' + (item.positions[0] + 1) + ': ' + r.digits[item.positions[0]] + ' → ' + item.number[item.positions[0]]));
+        h('summary', null, 'One wrong digit (' + s.substitutions.length + ')'),
+        candidateList(s.substitutions, (item) => 'pos ' + (item.positions[0] + 1) + ': ' + r.digits[item.positions[0]] + '→' + item.number[item.positions[0]]));
       suggestionsBody.append(details);
     }
   }
@@ -265,7 +237,7 @@
     for (const step of r.steps) {
       stepsBody.append(
         h('tr', step.i === 0 ? 'check-row' : null,
-          h('td', null, step.i === 0 ? '0 (check digit)' : String(step.i)),
+          h('td', null, step.i === 0 ? '0 (check)' : String(step.i)),
           h('td', null, String(step.digit)),
           h('td', null, 'p(' + (step.i % 8) + ', ' + step.digit + ') = ' + step.p),
           h('td', null, 'd(' + step.before + ', ' + step.p + ') = ' + step.c)));
@@ -274,15 +246,14 @@
     const lastDigit = r.digits[r.digits.length - 1];
     stepsResult.replaceChildren(
       final === 0
-        ? h('span', 'ok', 'Final c = 0, so the check passes.')
-        : h('span', 'bad', 'Final c = ' + final + ', not 0, so the check fails. ' +
-            'For the first ' + (r.digits.length - 1) + ' digits exactly as typed, the check digit would be ' +
-            r.expectedCheckDigit + ', not ' + lastDigit + '. The mistake could be in any digit, though.'));
+        ? h('span', 'ok', 'c = 0 → valid')
+        : h('span', 'bad', 'c = ' + final + ' ≠ 0 → invalid (check digit would be ' + r.expectedCheckDigit + ', not ' + lastDigit + ')'));
   }
 
   function render() {
     const r = A.analyze(input.value);
     statusEl.className = 'status state-' + r.state;
+    statusEl.hidden = r.state === 'empty';
     const [title, detail] = statusText(r);
     statusTitle.textContent = title;
     statusDetail.textContent = detail;

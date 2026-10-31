@@ -201,10 +201,6 @@
     return 'U+' + ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0');
   }
 
-  function plural(n, word) {
-    return n + ' ' + word + (n === 1 ? '' : 's');
-  }
-
   /**
    * Analyse raw input. Returns:
    *   state: 'empty' | 'incomplete' | 'valid' | 'invalid' | 'too-long'
@@ -233,45 +229,28 @@
       id: 'chars',
       label: 'Digits only',
       status: badChars.length ? 'fail' : 'pass',
-      detail: result.masked
-        ? 'This looks like a masked Aadhaar, which shows only the last 4 digits. The full 12-digit number is needed to check it.'
-        : badChars.length
-          ? 'Remove ' + uniqueBad.map(describeChar).join(', ') + '. Spaces and hyphens are fine.'
-          : 'Spaces and hyphens are ignored.',
+      detail: badChars.length ? 'Remove ' + uniqueBad.map(describeChar).join(', ') : '',
     });
 
     // 2. Length
     let lengthRule;
-    if (kind === 'vid') {
-      lengthRule = { status: 'pass', detail: '16 digits, so this is treated as a Virtual ID (VID).' };
-    } else if (n === AADHAAR_LENGTH) {
-      lengthRule = { status: 'pass', detail: '12 digits.' };
+    if (kind === 'vid' || n === AADHAAR_LENGTH) {
+      lengthRule = { status: 'pass', detail: '' };
     } else if (n < AADHAAR_LENGTH) {
-      lengthRule = { status: 'pending', detail: n + ' of 12 digits so far.' };
-    } else if (n < VID_LENGTH) {
-      lengthRule = {
-        status: 'fail',
-        detail: plural(n, 'digit') + '. An Aadhaar number has 12. (A Virtual ID has 16, so keep typing if that is what you are entering.)',
-      };
+      lengthRule = { status: 'pending', detail: n + '/12' };
     } else {
-      lengthRule = { status: 'fail', detail: plural(n, 'digit') + ': too long for an Aadhaar number (12) or a VID (16).' };
+      lengthRule = { status: 'fail', detail: n + ' digits' };
     }
-    rules.push(Object.assign({ id: 'length', label: kind === 'vid' ? 'Length (VID)' : 'Exactly 12 digits' }, lengthRule));
+    rules.push(Object.assign({ id: 'length', label: kind === 'vid' ? '16 digits (VID)' : '12 digits' }, lengthRule));
 
     // 3. First digit (Aadhaar only; UIDAI has published no such rule for VIDs)
     if (kind === 'aadhaar') {
       if (n === 0 || badChars.length) {
-        rules.push({
-          id: 'first', label: 'First digit is 2–9', status: 'pending',
-          detail: badChars.length ? 'Checked once only digits remain.' : '',
-        });
+        rules.push({ id: 'first', label: 'First digit 2–9', status: 'pending', detail: '' });
       } else if (digits[0] === '0' || digits[0] === '1') {
-        rules.push({
-          id: 'first', label: 'First digit is 2–9', status: 'fail',
-          detail: 'Starts with ' + digits[0] + '. Aadhaar numbers never start with 0 or 1: UIDAI reserves 0 for future longer numbers and 1 for entity IDs.',
-        });
+        rules.push({ id: 'first', label: 'First digit 2–9', status: 'fail', detail: '0 and 1 are reserved by UIDAI' });
       } else {
-        rules.push({ id: 'first', label: 'First digit is 2–9', status: 'pass', detail: 'Starts with ' + digits[0] + '.' });
+        rules.push({ id: 'first', label: 'First digit 2–9', status: 'pass', detail: '' });
       }
     }
 
@@ -281,18 +260,9 @@
       const ok = verhoeffValidate(digits);
       result.steps = verhoeffSteps(digits);
       result.expectedCheckDigit = verhoeffCheckDigit(digits.slice(0, -1));
-      rules.push({
-        id: 'checksum', label: 'Verhoeff check digit', status: ok ? 'pass' : 'fail',
-        detail: ok
-          ? 'The last digit, ' + digits[n - 1] + ', matches the other ' + (n - 1) + '.'
-          : 'The last digit, ' + digits[n - 1] + ', does not match the other ' + (n - 1) +
-            '. There is a typo somewhere in the number. It is not necessarily in the last digit.',
-      });
+      rules.push({ id: 'checksum', label: 'Verhoeff checksum', status: ok ? 'pass' : 'fail', detail: ok ? '' : 'typo somewhere' });
     } else if (kind !== 'unknown') {
-      rules.push({
-        id: 'checksum', label: 'Verhoeff check digit', status: 'pending',
-        detail: n < AADHAAR_LENGTH ? 'Checked once all 12 digits are in.' : 'Needs exactly 12 digits (or 16 for a VID).',
-      });
+      rules.push({ id: 'checksum', label: 'Verhoeff checksum', status: 'pending', detail: '' });
     }
 
     // Overall state

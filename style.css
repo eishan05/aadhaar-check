@@ -80,42 +80,10 @@ a:hover { text-decoration-thickness: 2px; }
   letter-spacing: -0.02em;
 }
 
-.lede {
-  margin: 0 0 16px;
-  font-size: 1.08rem;
-  color: var(--muted);
-  max-width: 62ch;
-}
-
-.badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 24px;
-  padding: 0;
-  list-style: none;
-}
-
-.badges li {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 11px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--card);
-  font-size: 0.86rem;
+.tagline {
+  margin: 0 0 20px;
   color: var(--muted);
 }
-
-.badges li::before {
-  content: "";
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: var(--ok);
-}
-
-.badges a { color: inherit; }
 
 /* --- Cards ------------------------------------------------------------------ */
 
@@ -125,22 +93,6 @@ a:hover { text-decoration-thickness: 2px; }
   border-radius: var(--radius);
   padding: 24px;
   margin-bottom: 20px;
-}
-
-.prose h2 { font-size: 1.2rem; margin: 0 0 10px; }
-.prose h2:not(:first-child) { margin-top: 26px; }
-.prose p, .prose ul, .prose ol { margin: 0 0 12px; }
-.prose li { margin-bottom: 6px; }
-.prose li:last-child { margin-bottom: 0; }
-.prose p:last-child { margin-bottom: 0; }
-
-code {
-  font-family: var(--mono);
-  font-size: 0.9em;
-  padding: 1px 5px;
-  border-radius: 5px;
-  background: var(--bg);
-  border: 1px solid var(--border);
 }
 
 /* --- Input ------------------------------------------------------------------ */
@@ -207,6 +159,7 @@ code {
 .status p { margin: 0; }
 .status-title { font-weight: 650; font-size: 1.08rem; }
 .status-detail { color: var(--muted); margin-top: 2px !important; font-size: 0.95rem; }
+.status-detail:empty { display: none; }
 
 .status-icon {
   flex: none;
@@ -287,7 +240,7 @@ code {
   border-top: 1px solid var(--border);
 }
 
-.suggestions h2 { font-size: 1.1rem; margin: 0 0 6px; }
+.suggestions h2 { font-size: 1.1rem; margin: 0 0 2px; }
 .suggestions h3 { font-size: 0.95rem; margin: 14px 0 6px; }
 .suggestions p { margin: 0 0 8px; font-size: 0.95rem; }
 
@@ -380,7 +333,6 @@ details[open] > summary { margin-bottom: 6px; }
   border-top: 1px solid var(--border);
 }
 
-.steps p { font-size: 0.94rem; }
 
 .table-scroll { overflow-x: auto; }
 
