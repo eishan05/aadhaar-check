@@ -21,6 +21,7 @@
   const stepsWrap = $('steps-wrap');
   const stepsBody = $('steps-body');
   const stepsResult = $('steps-result');
+  const copyStatus = $('copy-status');
 
   const DEFAULT_DETAIL = statusDetail.textContent;
 
@@ -155,16 +156,71 @@
     }
   }
 
+  function copyButton(digits) {
+    const btn = h('button', 'copy', 'Copy');
+    btn.type = 'button';
+    btn.dataset.number = digits;
+    btn.setAttribute('aria-label', 'Copy ' + group(digits));
+    return btn;
+  }
+
   function candidateList(items, note) {
     const ul = h('ul', 'cands');
     for (const item of items) {
-      ul.append(h('li', null, renderNumber(item.number, item.positions), note ? h('span', 'cand-note', note(item)) : null));
+      ul.append(h('li', null,
+        renderNumber(item.number, item.positions),
+        h('span', 'cand-side', note ? h('span', 'cand-note', note(item)) : null, copyButton(item.number))));
     }
     return ul;
   }
 
+  // --- Copy to clipboard ---------------------------------------------------------
+  // Copies plain digits (no spaces), which every form accepts. The clipboard
+  // is local to the device; nothing goes over the network.
+
+  async function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (_) { /* fall back below */ }
+    }
+    // Older browsers, or contexts where the async Clipboard API is refused.
+    const buffer = h('textarea', 'copy-buffer');
+    buffer.value = text;
+    buffer.readOnly = true;
+    document.body.append(buffer);
+    buffer.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
+    buffer.remove();
+    return ok;
+  }
+
+  const copyTimers = new WeakMap();
+
+  async function onCopyClick(event) {
+    const btn = event.target.closest('button.copy');
+    if (!btn) return;
+    const digits = btn.dataset.number;
+    const ok = await copyText(digits);
+    btn.focus();
+    btn.textContent = ok ? 'Copied' : 'Copy failed';
+    btn.classList.toggle('copied', ok);
+    btn.classList.toggle('copy-failed', !ok);
+    copyStatus.textContent = ok
+      ? 'Copied ' + group(digits) + ' to the clipboard.'
+      : 'Could not copy. Select the number and copy it by hand.';
+    clearTimeout(copyTimers.get(btn));
+    copyTimers.set(btn, setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied', 'copy-failed');
+    }, 1800));
+  }
+
   function renderSuggestions(r) {
     suggestionsBody.replaceChildren();
+    copyStatus.textContent = '';
     const s = r.suggestions;
     const total = s ? s.transpositions.length + s.substitutions.length + s.deletions.length : 0;
     suggestionsEl.hidden = total === 0;
@@ -239,6 +295,7 @@
   // --- Events --------------------------------------------------------------------
 
   input.addEventListener('input', onInput);
+  suggestionsBody.addEventListener('click', onCopyClick);
 
   clearBtn.addEventListener('click', () => {
     input.value = '';

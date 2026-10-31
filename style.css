@@ -327,6 +327,40 @@ code {
 
 .cand-note { color: var(--muted); font-size: 0.86rem; }
 
+.cand-side {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.cands .num { user-select: all; }
+
+.copy {
+  min-width: 72px;
+  padding: 4px 10px;
+  font: 500 0.84rem var(--sans);
+  color: var(--accent);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.copy:hover { border-color: var(--accent); }
+.copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.copy.copied { color: var(--ok); border-color: var(--ok); }
+.copy.copy-failed { color: var(--bad); border-color: var(--bad); }
+
+.copy-buffer {
+  position: fixed;
+  top: 0; left: 0;
+  width: 1px; height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 details.subs { margin-top: 14px; }
 
 details > summary {

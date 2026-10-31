@@ -21,7 +21,7 @@ When the check fails, the page lists the numbers you might have meant:
 - **One wrong digit.** For each position, the single digit that would make the number valid (at most 12).
 - **One extra digit.** For 13-digit input, every single deletion that gives a valid number.
 
-The page also shows the full Verhoeff calculation, step by step.
+Each suggestion has a **Copy** button that copies the number as plain digits (no spaces), ready to paste into a form. The page also shows the full Verhoeff calculation, step by step.
 
 A pass means the number is *well-formed*. It does not mean it was issued or belongs to anyone. Only UIDAI can confirm that, at [Check Aadhaar Validity](https://myaadhaar.uidai.gov.in/check-aadhaar-validity).
 
@@ -34,7 +34,7 @@ A pass means the number is *well-formed*. It does not mean it was issued or belo
    ```
    The browser therefore refuses every `fetch`, XHR, WebSocket, beacon, form submission and off-site image or script the page might attempt. This is enforced by the browser, not by trusting the code.
 2. **No third parties.** The page loads exactly three files from this repository: `style.css`, `aadhaar.js` and `app.js`. No analytics, no fonts, no CDNs.
-3. **No storage.** No cookies, `localStorage` or service worker. The number never goes into the URL. Spell-check and autofill are off on the input, so the browser doesn't send it to a cloud spelling service.
+3. **No storage.** No cookies, `localStorage` or service worker. The number never goes into the URL. Spell-check and autofill are off on the input, so the browser doesn't send it to a cloud spelling service. The Copy buttons use the system clipboard, which stays on your device unless your OS syncs clipboards between devices (Apple's Universal Clipboard, Windows clipboard sync).
 4. **Guarded in CI.** `test/privacy.test.js` fails the build if the CSP is weakened, if an external resource or inline script is added, or if the scripts mention any network, storage or dynamic-code API.
 
 To check this yourself:

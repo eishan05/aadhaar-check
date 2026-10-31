@@ -54,6 +54,7 @@
       <h2 id="suggestions-title">Possible corrections</h2>
       <p id="suggestions-intro" class="muted"></p>
       <div id="suggestions-body"></div>
+      <p id="copy-status" class="sr-only" role="status" aria-live="polite"></p>
     </section>
 
     <details id="steps-wrap" class="steps" hidden>
@@ -93,6 +94,7 @@
       <li><strong>Watch the network.</strong> Open your browser's developer tools (F12), go to the Network tab, and type a number. No requests appear.</li>
       <li><strong>Go offline.</strong> Load the page, turn on airplane mode or disconnect, and keep checking numbers. It works the same.</li>
       <li><strong>Nothing is kept.</strong> No cookies, no local storage, and the number never goes into the address bar or your history. Spell-check and autofill are switched off on the input, so the browser doesn't send it to a spelling service either.</li>
+      <li><strong>Copy stays on your device.</strong> The Copy buttons put the number on your system clipboard. If your devices share a clipboard (Apple's Universal Clipboard, Windows clipboard sync), the number goes along, as anything you copy does.</li>
       <li><strong>Run your own copy.</strong> Download the repository and open <code>index.html</code>, or serve it with any static file server.</li>
     </ul>
     <p class="muted">GitHub Pages, which hosts these files, sees your IP address when you load the page, as any web host does. It never sees what you type. Browser extensions you have installed can read every page you visit, this one included. If that worries you, use a private window with extensions off.</p>
