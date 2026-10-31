@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!--
+  Privacy lock. This policy lets the page load only its own script and style
+  files and forbids every kind of network connection (fetch, XHR, WebSocket,
+  beacons, form submission, images from elsewhere). Even if the code tried to
+  send your number somewhere, the browser would block it.
+-->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="x-dns-prefetch-control" content="off">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aadhaar Number Checker: private, offline, open source</title>
+<meta name="description" content="Check whether an Aadhaar number or VID is correctly formed: 12 digits, a valid first digit and a correct Verhoeff check digit. Runs entirely in your browser. Nothing you type is sent anywhere.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23146c43'/%3E%3Cpath d='M9 16.5l4.5 4.5L23 11' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<script src="aadhaar.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <header class="masthead">
+    <h1>Aadhaar Number Checker</h1>
+    <p class="lede">Check whether an Aadhaar number or 16-digit Virtual ID is correctly formed and free of typing mistakes. The check runs on your device. Nothing you type leaves this page.</p>
+    <ul class="badges" aria-label="Privacy properties">
+      <li>Works offline</li>
+      <li>No network requests</li>
+      <li>No cookies or storage</li>
+      <li><a href="https://github.com/eishan05/aadhaar-check">Open source</a></li>
+    </ul>
+  </header>
+
+  <section class="card checker" aria-label="Checker">
+    <label for="number" class="field-label">Aadhaar number or VID</label>
+    <div class="field">
+      <input id="number" type="text" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="40" placeholder="XXXX XXXX XXXX" aria-describedby="status-title status-detail">
+      <button id="clear" type="button" class="clear">Clear</button>
+    </div>
+
+    <div id="status" class="status state-empty" role="status" aria-live="polite">
+      <span class="status-icon" aria-hidden="true"></span>
+      <div>
+        <p id="status-title" class="status-title">Type or paste a number to check it.</p>
+        <p id="status-detail" class="status-detail">Spaces and hyphens are fine. Digits typed in Hindi, Punjabi, Tamil and other Indian scripts work too.</p>
+      </div>
+    </div>
+
+    <ul id="rules" class="rules" aria-label="Checks" hidden></ul>
+
+    <section id="suggestions" class="suggestions" aria-labelledby="suggestions-title" hidden>
+      <h2 id="suggestions-title">Possible corrections</h2>
+      <p id="suggestions-intro" class="muted"></p>
+      <div id="suggestions-body"></div>
+    </section>
+
+    <details id="steps-wrap" class="steps" hidden>
+      <summary>Show the checksum calculation</summary>
+      <p class="muted">Verhoeff's method reads the digits from right to left. Each digit is first scrambled by a permutation <i>p</i> that depends on its position <i>i</i>, then combined into a running value <i>c</i> using the multiplication table <i>d</i> of the dihedral group D<sub>5</sub>. The number is valid only if <i>c</i> ends at 0.</p>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th scope="col">i (from right)</th><th scope="col">Digit</th><th scope="col">p(i mod 8, digit)</th><th scope="col">c = d(c, p)</th></tr>
+          </thead>
+          <tbody id="steps-body"></tbody>
+        </table>
+      </div>
+      <p id="steps-result" class="steps-result"></p>
+    </details>
+  </section>
+
+  <section class="card prose">
+    <h2>What is checked</h2>
+    <ol>
+      <li><strong>Digits only.</strong> Spaces and hyphens are ignored. Letters and other symbols are flagged.</li>
+      <li><strong>Exactly 12 digits</strong> for an Aadhaar number (16 for a Virtual ID).</li>
+      <li><strong>First digit is 2 to 9.</strong> UIDAI reserved a leading 0 for future longer numbers and a leading 1 for entity IDs, so no resident's Aadhaar number starts with either.</li>
+      <li><strong>Verhoeff check digit.</strong> The last digit is computed from the other eleven. The scheme catches every single mistyped digit and every swap of two neighbouring digits. If the check fails, the page lists the numbers you may have meant.</li>
+    </ol>
+    <p class="muted">Source: UIDAI, <cite>A UID Numbering Scheme</cite> (May 2010), which specifies the 12-digit format, the reserved first digits and the Verhoeff check digit. UIDAI's Virtual ID circular (2018) specifies the 16-digit VID with the same check digit.</p>
+
+    <h2>What a pass means, and what it doesn't</h2>
+    <p>A pass means the number is <em>correctly formed</em>: it has no single-digit typo and no swapped neighbouring digits. It does <strong>not</strong> mean the number was ever issued, is still active, or belongs to a particular person. About one in ten random 12-digit strings starting with 2 to 9 passes the check. Only UIDAI can confirm that a number exists, through its official <a href="https://myaadhaar.uidai.gov.in/check-aadhaar-validity">Check Aadhaar Validity</a> service.</p>
+  </section>
+
+  <section class="card prose">
+    <h2>Private by construction. Check it yourself.</h2>
+    <p>This page is three small files you can read in a few minutes: <a href="https://github.com/eishan05/aadhaar-check/blob/main/index.html">index.html</a>, <a href="https://github.com/eishan05/aadhaar-check/blob/main/aadhaar.js">aadhaar.js</a> (the checks) and <a href="https://github.com/eishan05/aadhaar-check/blob/main/app.js">app.js</a> (the page). Nothing else loads: no analytics, fonts, trackers or third-party code.</p>
+    <ul>
+      <li><strong>The browser enforces it.</strong> The page carries a Content Security Policy with <code>connect-src 'none'</code> and <code>default-src 'none'</code>. Your browser refuses any attempt by this page to send data, whatever the code says.</li>
+      <li><strong>Watch the network.</strong> Open your browser's developer tools (F12), go to the Network tab, and type a number. No requests appear.</li>
+      <li><strong>Go offline.</strong> Load the page, turn on airplane mode or disconnect, and keep checking numbers. It works the same.</li>
+      <li><strong>Nothing is kept.</strong> No cookies, no local storage, and the number never goes into the address bar or your history. Spell-check and autofill are switched off on the input, so the browser doesn't send it to a spelling service either.</li>
+      <li><strong>Run your own copy.</strong> Download the repository and open <code>index.html</code>, or serve it with any static file server.</li>
+    </ul>
+    <p class="muted">GitHub Pages, which hosts these files, sees your IP address when you load the page, as any web host does. It never sees what you type. Browser extensions you have installed can read every page you visit, this one included. If that worries you, use a private window with extensions off.</p>
+  </section>
+
+  <footer class="foot">
+    <p>Not affiliated with or endorsed by UIDAI or the Government of India. <a href="https://github.com/eishan05/aadhaar-check">Source on GitHub</a> · MIT licence.</p>
+  </footer>
+
+</main>
+</body>
+</html>
